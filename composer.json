@@ -1,0 +1,33 @@
+{
+  "name": "rammewerk/request",
+  "type": "library",
+  "description": "Simple request handler for PHP",
+  "homepage": "https://rammewerk.com",
+  "license": "MIT",
+  "keywords": [
+    "request"
+  ],
+  "authors": [
+    {
+      "name": "Kristoffer Follestad",
+      "email": "kristoffer@rammewerk.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Rammewerk\\Component\\Request\\": "src/"
+    },
+    "exclude-from-classmap": [
+      "tests/",
+      ".idea/"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Rammewerk\\Component\\Request\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": ">=8.2"
+  }
+}
