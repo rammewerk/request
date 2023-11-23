@@ -20,30 +20,35 @@ class Request {
     private array $server;
 
 
-
-
     /**
-     * @param array<string, mixed>|null $query
-     * @param array<string, mixed>|null $post
+     * @param array<string, mixed>|null $inputs
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $files
      * @param array<string, mixed>|null $server
      * @param array<string, mixed>|null $session
      */
     public function __construct(
-        array $query = null,
-        array $post = null,
+        array $inputs = null,
         array $cookies = null,
         array $files = null,
         array $server = null,
         array $session = null
     ) {
-        $this->inputs = array_merge( $query ?? $_GET, $post ?? $_POST );
+        $this->inputs = array_merge( $inputs ?? [], $this->getRawRequestData(), $_GET, $_POST );
         $this->cookies = $cookies ?? $_COOKIE;
         $this->server = $server ?? $_SERVER;
         $this->files = new Files( $files ?? $_FILES );
         $this->session = new Session( $session );
         $this->flash = new Flash( $this->session );
+    }
+
+
+    private function getRawRequestData(): array {
+        # Reads raw data from the request body.
+        $data = @file_get_contents( 'php://input' );
+        // Parse query string (URL-encoded form data) into variables.
+        parse_str( $data ?: '', $parsedData );
+        return $parsedData;
     }
 
 
@@ -65,8 +70,6 @@ class Request {
     }
 
 
-
-
     /**
      * Get root domain. Domain without subdomain:
      * Example: site.com
@@ -76,8 +79,6 @@ class Request {
     public function rootDomain(): string {
         return implode( '.', array_slice( explode( '.', $this->server( 'HTTP_HOST' ) ), -2 ) );
     }
-
-
 
 
     /**
@@ -91,8 +92,6 @@ class Request {
     }
 
 
-
-
     /**
      * Only get the subdomain.
      *
@@ -101,8 +100,6 @@ class Request {
     public function subdomain(): string {
         return implode( '.', explode( '.', $this->server( 'HTTP_HOST' ), -2 ) );
     }
-
-
 
 
     /**
@@ -118,8 +115,6 @@ class Request {
     }
 
 
-
-
     /**
      * Check if subdomain matches argument
      *
@@ -130,8 +125,6 @@ class Request {
     public function isSubdomain(string $subdomain): bool {
         return strtolower( $this->subdomain() ) === strtolower( $subdomain );
     }
-
-
 
 
     /**
@@ -185,7 +178,7 @@ class Request {
 
         if( $checkProxy ) {
 
-            $isValid = static function (string $ip): bool {
+            $isValid = static function(string $ip): bool {
                 if( empty( $ip ) ) return false;
                 return filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false;
             };
@@ -205,8 +198,6 @@ class Request {
     }
 
 
-
-
     /*
     |--------------------------------------------------------------------------
     | Get inputs, server, file and cookie data
@@ -218,8 +209,6 @@ class Request {
     }
 
 
-
-
     /**
      * Get all post and query data
      *
@@ -228,8 +217,6 @@ class Request {
     public function all(): array {
         return $this->inputs;
     }
-
-
 
 
     /**
@@ -245,8 +232,6 @@ class Request {
     }
 
 
-
-
     /**
      * Get cookie data
      *
@@ -258,8 +243,6 @@ class Request {
     public function cookie(string $key, string $default = null): ?string {
         return array_key_exists( $key, $this->cookies ) ? $this->cookies[$key] : $default;
     }
-
-
 
 
     /**
@@ -294,7 +277,7 @@ class Request {
     public function validate_csrf(string $page = null, string $message = null): void {
         $request = (string)$this->input( 'token' );
         $session = $page ? hash_hmac( 'sha256', $page, (string)$this->session->get( '_token2' ) ) : (string)$this->session->token();
-        if( ! empty( $session ) && ! empty( $request ) && hash_equals( $session, $request ) ) return;
+        if( !empty( $session ) && !empty( $request ) && hash_equals( $session, $request ) ) return;
         throw new TokenMismatchException( $message ?? 'Unable to validate request' );
     }
 
