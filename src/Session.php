@@ -24,6 +24,9 @@ class Session {
         ini_set( 'session.cookie_httponly', 1 );
         $this->start();
         $this->session = $session ?? $_SESSION;
+        if( !$this->has( self::CSRF_TOKEN_NAME ) ) {
+            $this->regenerateCsrfToken();
+        }
         $this->close();
     }
 
@@ -50,10 +53,6 @@ class Session {
         }
 
         $this->started = true;
-
-        if( !$this->has( self::CSRF_TOKEN_NAME ) ) {
-            $this->regenerateCsrfToken();
-        }
 
         return true;
 
