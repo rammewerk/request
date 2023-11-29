@@ -248,7 +248,7 @@ class Request {
     /**
      * @param string $name
      *
-     * @return \Core\Request\File\UploadedFile|null
+     * @return UploadedFile|null
      */
     public function file(string $name): ?UploadedFile {
         $file = $this->files->get( $name );
@@ -268,16 +268,16 @@ class Request {
     /**
      * Validate CSRF token - Throw error if not valid
      *
-     * @param string|null $page
+     * @param string $input name of input to validate
      * @param string|null $message
      *
      * @return void
-     * @throws \Core\Request\Error\TokenMismatchException
+     * @throws TokenMismatchException
      */
-    public function validate_csrf(string $page = null, string $message = null): void {
-        $request = (string)$this->input( 'token' );
-        $session = $page ? hash_hmac( 'sha256', $page, (string)$this->session->get( '_token2' ) ) : (string)$this->session->token();
-        if( !empty( $session ) && !empty( $request ) && hash_equals( $session, $request ) ) return;
+    public function validate_csrf(string $input = 'token', string $message = null): void {
+        $request = (string)$this->input( $input );
+        $session = (string)$this->session->csrf_token();
+        if( !empty( $session ) && hash_equals( $session, $request ) ) return;
         throw new TokenMismatchException( $message ?? 'Unable to validate request' );
     }
 

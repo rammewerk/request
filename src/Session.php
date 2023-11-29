@@ -8,12 +8,12 @@ use const PHP_SESSION_ACTIVE;
 
 class Session {
 
+    private const CSRF_TOKEN_NAME = '_csrf_token';
+
     private bool $started = false;
 
     /** @var array<string, mixed> $session */
     private array $session;
-
-
 
 
     /**
@@ -26,8 +26,6 @@ class Session {
         $this->session = $session ?? $_SESSION;
         $this->close();
     }
-
-
 
 
     /**
@@ -47,21 +45,19 @@ class Session {
             throw new RuntimeException( sprintf( 'Failed to start the session because headers have already been sent by "%s" at line %d.', $file, $line ) );
         }
 
-        if( ! session_start() ) {
+        if( !session_start() ) {
             throw new RuntimeException( 'Failed to start the session' );
         }
 
         $this->started = true;
 
-        if( ! $this->has( '_token' ) ) {
-            $this->regenerateToken();
+        if( !$this->has( self::CSRF_TOKEN_NAME ) ) {
+            $this->regenerateCsrfToken();
         }
 
         return true;
 
     }
-
-
 
 
     public function set(string $key, mixed $value = null): void {
@@ -71,13 +67,9 @@ class Session {
     }
 
 
-
-
     public function get(string $key, mixed $default = null): mixed {
         return $this->session[$key] ?? $default;
     }
-
-
 
 
     public function remove(string $key): void {
@@ -87,21 +79,15 @@ class Session {
     }
 
 
-
-
     private function name(): string {
         return session_name() ?: '';
     }
-
-
 
 
     private function flush(): void {
         $this->session = [];
         $_SESSION = [];
     }
-
-
 
 
     /**
@@ -131,8 +117,6 @@ class Session {
     }
 
 
-
-
     /**
      * Regenerate Session ID
      *
@@ -151,13 +135,11 @@ class Session {
 
         session_regenerate_id( $delete_old_session );
 
-        $this->regenerateToken();
+        $this->regenerateCsrfToken();
 
         return true;
 
     }
-
-
 
 
     /**
@@ -166,10 +148,8 @@ class Session {
      * @return bool
      */
     public function has(string $key): bool {
-        return ! is_null( $this->get( $key ) );
+        return !is_null( $this->get( $key ) );
     }
-
-
 
 
     /**
@@ -177,11 +157,9 @@ class Session {
      *
      * @return string|null
      */
-    public function token(): ?string {
-        return $this->get( '_token' );
+    public function csrf_token(): ?string {
+        return $this->get( self::CSRF_TOKEN_NAME );
     }
-
-
 
 
     /**
@@ -189,15 +167,13 @@ class Session {
      *
      * @return void
      */
-    public function regenerateToken(): void {
+    public function regenerateCsrfToken(): void {
         try {
-            $_SESSION['_token'] = $this->session['_token'] = bin2hex( random_bytes( 32 ) );
-        } catch ( Exception ) {
-            unset( $_SESSION['_token'], $this->session['_token'] );
+            $_SESSION[self::CSRF_TOKEN_NAME] = $this->session[self::CSRF_TOKEN_NAME] = bin2hex( random_bytes( 32 ) );
+        } catch( Exception ) {
+            unset( $_SESSION[self::CSRF_TOKEN_NAME], $this->session[self::CSRF_TOKEN_NAME] );
         }
     }
-
-
 
 
     public function close(): void {
