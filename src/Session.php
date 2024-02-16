@@ -71,6 +71,11 @@ class Session {
     }
 
 
+    public function all(): array {
+        return $this->session;
+    }
+
+
     public function remove(string $key): void {
         $this->start();
         unset( $this->session[$key], $_SESSION[$key] );
