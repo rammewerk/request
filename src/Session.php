@@ -71,6 +71,7 @@ class Session {
     }
 
 
+    /** @return array<string, mixed> */
     public function all(): array {
         return $this->session;
     }
@@ -157,16 +158,6 @@ class Session {
 
 
     /**
-     * Get the CSRF token value.
-     *
-     * @return string|null
-     */
-    public function csrf_token(): ?string {
-        return $this->get( self::CSRF_TOKEN_NAME );
-    }
-
-
-    /**
      * Regenerate the CSRF token value.
      *
      * @return void
@@ -177,6 +168,17 @@ class Session {
         } catch( Exception ) {
             unset( $_SESSION[self::CSRF_TOKEN_NAME], $this->session[self::CSRF_TOKEN_NAME] );
         }
+    }
+
+
+    /**
+     * Get the CSRF token value.
+     *
+     * @return string
+     */
+    public function csrf_token(): string {
+        $v = $this->get( self::CSRF_TOKEN_NAME );
+        return is_string( $v ) ? $v : '';
     }
 
 

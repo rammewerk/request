@@ -12,7 +12,7 @@ class Request {
     public Files $files;
     public Flash $flash;
 
-    /** @var array<string, mixed> $inputs */
+    /** @var array<int|string, array<int|string, string>|string> $inputs */
     private array $inputs;
     /** @var array<string, string> $cookies */
     private array $cookies;
@@ -21,11 +21,11 @@ class Request {
 
 
     /**
-     * @param array<string, mixed>|null $inputs
-     * @param array<string, mixed>|null $cookies
-     * @param array<string, mixed>|null $files
-     * @param array<string, mixed>|null $server
-     * @param array<string, mixed>|null $session
+     * @param array<string, string|array<int|string, string>> $inputs
+     * @param array<string, string> $cookies
+     * @param array<string, mixed> $files
+     * @param array<string, string> $server
+     * @param array<string, mixed> $session
      */
     public function __construct(
         array $inputs = null,
@@ -43,10 +43,13 @@ class Request {
     }
 
 
+    /**
+     * @return array<int|string, array<int|string, string>|string>
+     */
     private function getRawRequestData(): array {
         # Reads raw data from the request body.
         $data = @file_get_contents( 'php://input' );
-        // Parse query string (URL-encoded form data) into variables.
+        # Parse query string (URL-encoded form data) into variables.
         parse_str( $data ?: '', $parsedData );
         return $parsedData;
     }
@@ -204,15 +207,19 @@ class Request {
     |--------------------------------------------------------------------------
     */
 
-    public function input(string $key, mixed $default = null): mixed {
-        return array_key_exists( $key, $this->inputs ) ? $this->inputs[$key] : $default;
+    /**
+     * @param string $key
+     * @return array<int|string, string>|string|null
+     */
+    public function input(string $key): array|string|null {
+        return $this->inputs[$key] ?? null;
     }
 
 
     /**
      * Get all post and query data
      *
-     * @return array<string, mixed>
+     * @return array<int|string, array<int|string, string>|string|null>
      */
     public function all(): array {
         return $this->inputs;
@@ -223,12 +230,11 @@ class Request {
      * Get server data
      *
      * @param string $key
-     * @param string $default
      *
      * @return string
      */
-    public function server(string $key, string $default = ''): string {
-        return array_key_exists( $key, $this->server ) ? $this->server[$key] : $default;
+    public function server(string $key): string {
+        return $this->server[$key] ?? '';
     }
 
 
@@ -236,12 +242,11 @@ class Request {
      * Get cookie data
      *
      * @param string $key
-     * @param string|null $default
      *
-     * @return string|null
+     * @return string
      */
-    public function cookie(string $key, string $default = null): ?string {
-        return array_key_exists( $key, $this->cookies ) ? $this->cookies[$key] : $default;
+    public function cookie(string $key): string {
+        return $this->cookies[$key] ?? '';
     }
 
 
@@ -275,10 +280,77 @@ class Request {
      * @throws TokenMismatchException
      */
     public function validate_csrf(string $input = 'token', string $message = null): void {
-        $request = (string)$this->input( $input );
-        $session = (string)$this->session->csrf_token();
+        $request = $this->inputString( $input ) ?? '';
+        $session = $this->session->csrf_token();
         if( !empty( $session ) && hash_equals( $session, $request ) ) return;
         throw new TokenMismatchException( $message ?? 'Unable to validate request' );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Type safe inputs
+    |--------------------------------------------------------------------------
+    */
+
+    public function inputString(string $key): ?string {
+        $v = $this->input( $key );
+        return is_string( $v ) ? $v : null;
+    }
+
+
+    public function inputInt(string $key): ?int {
+        $v = $this->inputString( $key );
+        if( !is_numeric( $v ) ) return null;
+        return (int)round( (float)$v );
+    }
+
+
+    public function inputFloat(string $key): ?float {
+        $v = $this->inputString( $key );
+        if( !is_numeric( $v ) ) return null;
+        return (float)$v;
+    }
+
+
+    public function inputBool(string $key): bool {
+        $v = $this->input( $key );
+        return filter_var( $v, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ) ?? false;
+    }
+
+    /**
+     * @param string $key
+     * @return array<string|int, string|array<string|int, string>>|null
+     */
+    public function inputArray(string $key): ?array {
+        $v = $this->input( $key );
+        return is_array( $v ) ? $v : null;
+    }
+
+
+    public function inputDateTime(string $key, ?string $format = null, bool $throwOnError = false): ?\DateTimeImmutable {
+        $v = $this->inputString( $key );
+        if( empty( $v ) ) return null;
+
+        try {
+            $dateTime = ($format) ? \DateTimeImmutable::createFromFormat( $format, $v ) : new \DateTimeImmutable( $v );
+            if( $dateTime === false && $throwOnError ) {
+                throw new \InvalidArgumentException( "Unable to parse date with the given format: $format" );
+            }
+            return $dateTime ?: null;
+        } catch( \Exception $e ) {
+            if( $throwOnError ) {
+                throw new \InvalidArgumentException( "Unable to parse date: " . $e->getMessage() );
+            }
+            return null;
+        }
+    }
+
+    public function inputEmail(string $string): ?string {
+        $v = $this->inputString( $string );
+        if( empty( $v ) ) return null;
+        if( !filter_var( trim( $v ), FILTER_VALIDATE_EMAIL ) ) return null;
+        return $v;
     }
 
 

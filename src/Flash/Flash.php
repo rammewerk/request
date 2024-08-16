@@ -18,7 +18,7 @@ use Rammewerk\Component\Request\Session;
  */
 class Flash {
 
-    private const FLASH_KEY = 'bonsy_flash';
+    private const FLASH_KEY = 'rammewerk_flash';
 
 
     /**
@@ -28,7 +28,8 @@ class Flash {
      */
     public function __construct(
         private readonly Session $session
-    ) {}
+    ) {
+    }
 
 
     /**
@@ -37,7 +38,7 @@ class Flash {
      * @param string $message
      */
     public function success(string $message): void {
-        $this->save(new FlashModel(FlashTypeEnum::SUCCESS, $message));
+        $this->save( new FlashModel( FlashTypeEnum::SUCCESS, $message ) );
     }
 
 
@@ -47,7 +48,7 @@ class Flash {
      * @param string $message
      */
     public function error(string $message): void {
-        $this->save(new FlashModel(FlashTypeEnum::ERROR, $message));
+        $this->save( new FlashModel( FlashTypeEnum::ERROR, $message ) );
     }
 
 
@@ -58,7 +59,7 @@ class Flash {
      * @noinspection PhpUnused
      */
     public function info(string $message): void {
-        $this->save(new FlashModel(FlashTypeEnum::INFO, $message));
+        $this->save( new FlashModel( FlashTypeEnum::INFO, $message ) );
     }
 
 
@@ -68,7 +69,7 @@ class Flash {
      * @param string $message
      */
     public function warning(string $message): void {
-        $this->save(new FlashModel(FlashTypeEnum::WARNING, $message));
+        $this->save( new FlashModel( FlashTypeEnum::WARNING, $message ) );
     }
 
 
@@ -80,7 +81,7 @@ class Flash {
      * @noinspection PhpUnused
      */
     public function notify(string $message): void {
-        $this->save(new FlashModel(FlashTypeEnum::NOTIFY, $message));
+        $this->save( new FlashModel( FlashTypeEnum::NOTIFY, $message ) );
     }
 
 
@@ -91,13 +92,13 @@ class Flash {
      */
     public function get(): array {
         $flash = $this->getStored();
-        $this->session->remove(self::FLASH_KEY);
+        $this->session->remove( self::FLASH_KEY );
         return $flash;
     }
 
 
     public function set(FlashModel $flashModel): void {
-        $this->save($flashModel);
+        $this->save( $flashModel );
     }
 
 
@@ -107,11 +108,11 @@ class Flash {
      * @return FlashModel[]
      */
     private function getStored(): array {
-        $stored = $this->session->get(self::FLASH_KEY) ?? [];
-        if( !is_array($stored) ) return [];
-        return array_map(static function(array $d): FlashModel {
-            return new FlashModel(FlashTypeEnum::from($d['type']), $d['message']);
-        }, $stored);
+        $stored = $this->session->get( self::FLASH_KEY ) ?? [];
+        if( !is_array( $stored ) ) return [];
+        return array_map( static function(array $d): FlashModel {
+            return new FlashModel( FlashTypeEnum::from( $d['type'] ), $d['message'] );
+        }, $stored );
     }
 
 
@@ -135,7 +136,7 @@ class Flash {
 
         $list[] = (array)$flash;
 
-        $this->session->set(self::FLASH_KEY, $list);
+        $this->session->set( self::FLASH_KEY, $list );
     }
 
 
