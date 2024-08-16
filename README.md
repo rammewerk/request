@@ -39,49 +39,37 @@ $allInputs = $request->all();
 
 ### Session Management
 ```php
-use Rammewerk\Component\Request\Session;
-
-// Initialize Session
-$session = new Session();
 
 // Set a session value
-$session->set('user_id', 42);
+$request->session->set('user_id', 42);
 
 // Get a session value
-$userId = $session->get('user_id');
+$userId = $request->session->get('user_id');
 
 // Regenerate CSRF Token
-$session->regenerateCsrfToken();
+$request->session->regenerateCsrfToken();
 ```
 
 ### File Upload Handling
 ```php
-use Rammewerk\Component\Request\Files;
-
-// Initialize Files
-$files = $request->files;
 
 // Retrieve an uploaded file
-$uploadedFile = $files->get('profile_picture');
+$uploadedFile = $request->file('profile_picture');
 
 if ($uploadedFile) {
     // Handle the uploaded file
-    move_uploaded_file($uploadedFile->getTmpName(), '/path/to/destination');
+    $uploadedFile->move('/path/to/folder', 'name.jpg' );
 }
 ```
 
 ### Flash Messages
 ```php
-use Rammewerk\Component\Request\Flash\Flash;
-
-// Initialize Flash
-$flash = $request->flash;
 
 // Set a success message
-$flash->success('Your profile has been updated!');
+$request->flash->success('Your profile has been updated!');
 
 // Get and display flash messages
-foreach ($flash->get() as $message) {
+foreach ($request->flash->get() as $message) {
     echo $message->type . ': ' . $message->message;
 }
 ```
@@ -111,6 +99,15 @@ $age = $request->inputInt('age');
 
 // Retrieve a boolean input
 $isActive = $request->inputBool('is_active');
+
+// Retrieve an array input
+$data = $request->inputArray('data');
+
+// Retrieve a date input
+$date = $request->inputDateTime('date', 'Y-m-d H:i:s');
+
+// Retrieve an email input, validates the email address. null if not valid
+$email = $request->inputEmail('email');
 ```
 
 ## Contributing
