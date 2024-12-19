@@ -1,7 +1,10 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Rammewerk\Component\Request;
 
+use DateTimeImmutable;
+use Exception;
+use InvalidArgumentException;
 use Rammewerk\Component\Request\Flash\Flash;
 use Rammewerk\Component\Request\File\UploadedFile;
 use Rammewerk\Component\Request\Error\TokenMismatchException;
@@ -20,6 +23,7 @@ class Request {
     private array $server;
 
 
+
     /**
      * @param array<string, string|array<int|string, string>> $inputs
      * @param array<string, string> $cookies
@@ -28,19 +32,20 @@ class Request {
      * @param array<string, mixed> $session
      */
     public function __construct(
-        array $inputs = null,
-        array $cookies = null,
-        array $files = null,
-        array $server = null,
-        array $session = null
+        array $inputs = [],
+        array $cookies = [],
+        array $files = [],
+        array $server = [],
+        array $session = []
     ) {
-        $this->inputs = array_merge( $inputs ?? [], $this->getRawRequestData(), $_GET, $_POST );
-        $this->cookies = $cookies ?? $_COOKIE;
-        $this->server = $server ?? $_SERVER;
-        $this->files = new Files( $files ?? $_FILES );
+        $this->inputs = array_merge( $inputs, $this->getRawRequestData(), $_GET, $_POST );
+        $this->cookies = !empty( $cookies ) ? $cookies : $_COOKIE;
+        $this->server = !empty( $server ) ? $server : $_SERVER;
+        $this->files = new Files( !empty( $files ) ? $files : $_FILES );
         $this->session = new Session( $session );
         $this->flash = new Flash( $this->session );
     }
+
 
 
     /**
@@ -73,6 +78,7 @@ class Request {
     }
 
 
+
     /**
      * Get root domain. Domain without subdomain:
      * Example: site.com
@@ -82,6 +88,7 @@ class Request {
     public function rootDomain(): string {
         return implode( '.', array_slice( explode( '.', $this->server( 'HTTP_HOST' ) ), -2 ) );
     }
+
 
 
     /**
@@ -95,6 +102,7 @@ class Request {
     }
 
 
+
     /**
      * Only get the subdomain.
      *
@@ -103,6 +111,7 @@ class Request {
     public function subdomain(): string {
         return implode( '.', explode( '.', $this->server( 'HTTP_HOST' ), -2 ) );
     }
+
 
 
     /**
@@ -118,6 +127,7 @@ class Request {
     }
 
 
+
     /**
      * Check if subdomain matches argument
      *
@@ -128,6 +138,7 @@ class Request {
     public function isSubdomain(string $subdomain): bool {
         return strtolower( $this->subdomain() ) === strtolower( $subdomain );
     }
+
 
 
     /**
@@ -209,11 +220,13 @@ class Request {
 
     /**
      * @param string $key
+     *
      * @return array<int|string, string>|string|null
      */
     public function input(string $key): array|string|null {
         return $this->inputs[$key] ?? null;
     }
+
 
 
     /**
@@ -224,6 +237,7 @@ class Request {
     public function all(): array {
         return $this->inputs;
     }
+
 
 
     /**
@@ -238,6 +252,7 @@ class Request {
     }
 
 
+
     /**
      * Get cookie data
      *
@@ -248,6 +263,7 @@ class Request {
     public function cookie(string $key): string {
         return $this->cookies[$key] ?? '';
     }
+
 
 
     /**
@@ -274,17 +290,18 @@ class Request {
      * Validate CSRF token - Throw error if not valid
      *
      * @param string $input name of input to validate
-     * @param string|null $message
+     * @param string $message
      *
      * @return void
      * @throws TokenMismatchException
      */
-    public function validate_csrf(string $input = 'token', string $message = null): void {
+    public function validate_csrf(string $input = 'token', string $message = 'Unable to validate request'): void {
         $request = $this->inputString( $input ) ?? '';
         $session = $this->session->csrf_token();
         if( !empty( $session ) && hash_equals( $session, $request ) ) return;
-        throw new TokenMismatchException( $message ?? 'Unable to validate request' );
+        throw new TokenMismatchException( $message );
     }
+
 
 
     /*
@@ -299,11 +316,13 @@ class Request {
     }
 
 
+
     public function inputInt(string $key): ?int {
         $v = $this->inputString( $key );
         if( !is_numeric( $v ) ) return null;
         return (int)round( (float)$v );
     }
+
 
 
     public function inputFloat(string $key): ?float {
@@ -313,13 +332,17 @@ class Request {
     }
 
 
+
     public function inputBool(string $key): bool {
         $v = $this->input( $key );
         return filter_var( $v, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ) ?? false;
     }
 
+
+
     /**
      * @param string $key
+     *
      * @return array<string|int, string|array<string|int, string>>|null
      */
     public function inputArray(string $key): ?array {
@@ -328,23 +351,26 @@ class Request {
     }
 
 
-    public function inputDateTime(string $key, ?string $format = null, bool $throwOnError = false): ?\DateTimeImmutable {
+
+    public function inputDateTime(string $key, ?string $format = null, bool $throwOnError = false): ?DateTimeImmutable {
         $v = $this->inputString( $key );
         if( empty( $v ) ) return null;
 
         try {
-            $dateTime = ($format) ? \DateTimeImmutable::createFromFormat( $format, $v ) : new \DateTimeImmutable( $v );
+            $dateTime = ($format) ? DateTimeImmutable::createFromFormat( $format, $v ) : new DateTimeImmutable( $v );
             if( $dateTime === false && $throwOnError ) {
-                throw new \InvalidArgumentException( "Unable to parse date with the given format: $format" );
+                throw new InvalidArgumentException( "Unable to parse date with the given format: $format" );
             }
             return $dateTime ?: null;
-        } catch( \Exception $e ) {
+        } catch( Exception $e ) {
             if( $throwOnError ) {
-                throw new \InvalidArgumentException( "Unable to parse date: " . $e->getMessage() );
+                throw new InvalidArgumentException( "Unable to parse date: " . $e->getMessage() );
             }
             return null;
         }
     }
+
+
 
     public function inputEmail(string $string): ?string {
         $v = $this->inputString( $string );

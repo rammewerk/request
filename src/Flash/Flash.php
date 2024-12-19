@@ -18,7 +18,7 @@ use Rammewerk\Component\Request\Session;
  */
 class Flash {
 
-    private const FLASH_KEY = 'rammewerk_flash';
+    private const string FLASH_KEY = 'rammewerk_flash';
 
 
     /**

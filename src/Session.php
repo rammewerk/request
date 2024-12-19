@@ -8,7 +8,7 @@ use const PHP_SESSION_ACTIVE;
 
 class Session {
 
-    private const CSRF_TOKEN_NAME = '_csrf_token';
+    private const string CSRF_TOKEN_NAME = '_csrf_token';
 
     private bool $started = false;
 
@@ -19,11 +19,11 @@ class Session {
     /**
      * @param array<string, mixed>|null $session
      */
-    public function __construct(?array $session) {
+    public function __construct(array $session) {
         /** Prevent client-side JavaScript from accessing the session cookie.*/
         ini_set( 'session.cookie_httponly', 1 );
         $this->start();
-        $this->session = $session ?? $_SESSION;
+        $this->session = ! empty( $session ) ? $session : $_SESSION;
         if( !$this->has( self::CSRF_TOKEN_NAME ) ) {
             $this->regenerateCsrfToken();
         }

@@ -22,7 +22,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Accepts the information of the uploaded file as provided by the PHP global $_FILES.
      *
@@ -37,26 +36,25 @@ class UploadedFile extends SplFileInfo {
      *
      * Calling any other method on a non-valid instance will cause an unpredictable result.
      *
-     * @param string $path          The full temporary path to the file
-     * @param string $originalName  The original file name of the uploaded file
-     * @param string|null $mimeType The type of the file as provided by PHP; null defaults to application/octet-stream
-     * @param int|null $error       The error constant of the upload (one of PHPs UPLOAD_ERR_XXX constants); null defaults to UPLOAD_ERR_OK
+     * @param string $path         The full temporary path to the file
+     * @param string $originalName The original file name of the uploaded file
+     * @param string $mimeType     The type of the file as provided by PHP; null defaults to application/octet-stream
+     * @param int|null $error      The error constant of the upload (one of PHPs UPLOAD_ERR_XXX constants); null defaults to UPLOAD_ERR_OK
      *
      * @throws Exception
      */
-    public function __construct(string $path, string $originalName, string $mimeType = null, int $error = null) {
+    public function __construct(string $path, string $originalName, string $mimeType = '', ?int $error = null) {
         $this->originalName = $this->getName( $originalName );
         $this->mimeType = $mimeType ?: 'application/octet-stream';
         $this->error = $error ?? \UPLOAD_ERR_OK;
 
-        if( $this->error === \UPLOAD_ERR_OK && ! is_file( $path ) ) {
+        if( $this->error === \UPLOAD_ERR_OK && !is_file( $path ) ) {
             throw new FileNotFoundException( $path );
         }
 
         parent::__construct( $path );
 
     }
-
 
 
 
@@ -75,7 +73,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Returns the original file name.
      *
@@ -87,7 +84,6 @@ class UploadedFile extends SplFileInfo {
     public function getClientOriginalName(): ?string {
         return $this->originalName;
     }
-
 
 
 
@@ -103,7 +99,6 @@ class UploadedFile extends SplFileInfo {
     public function getClientOriginalExtension(): string {
         return pathinfo( $this->originalName, PATHINFO_EXTENSION );
     }
-
 
 
 
@@ -127,7 +122,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Returns the upload error.
      *
@@ -143,7 +137,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Returns whether the file was uploaded successfully.
      *
@@ -153,7 +146,6 @@ class UploadedFile extends SplFileInfo {
     public function isValid(): bool {
         return $this->error === \UPLOAD_ERR_OK && is_uploaded_file( $this->getPathname() );
     }
-
 
 
 
@@ -172,7 +164,7 @@ class UploadedFile extends SplFileInfo {
 
             $target = $this->getTargetFile( $directory, $name );
 
-            set_error_handler( static function (int $type, string $msg) use (&$error) {
+            set_error_handler( static function(int $type, string $msg) use (&$error) {
                 $error = $msg;
                 return true;
             } );
@@ -181,7 +173,7 @@ class UploadedFile extends SplFileInfo {
 
             restore_error_handler();
 
-            if( ! $moved ) {
+            if( !$moved ) {
                 throw new FileException( sprintf( 'Could not move the file "%s" to "%s" (%s)', $this->getPathname(), $target, strip_tags( $error ?? '' ) ) );
             }
 
@@ -214,7 +206,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Returns the maximum size of an uploaded file as configured in php.ini.
      *
@@ -225,7 +216,6 @@ class UploadedFile extends SplFileInfo {
         $sizeUploadMax = self::parseFileSize( ini_get( 'upload_max_filesize' ) );
         return min( $sizePostMax ?: PHP_INT_MAX, $sizeUploadMax ?: PHP_INT_MAX );
     }
-
 
 
 
@@ -270,7 +260,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * Returns an informative upload error message.
      *
@@ -279,15 +268,15 @@ class UploadedFile extends SplFileInfo {
      */
     public function getErrorMessage(): string {
 
-        $message = match ( $this->error ) {
-            \UPLOAD_ERR_INI_SIZE => 'The file "{name}" exceeds your upload_max_filesize ini directive( limit is {size} KiB).',
-            \UPLOAD_ERR_FORM_SIZE => 'The file {name} exceeds the upload limit defined in your form.',
-            \UPLOAD_ERR_PARTIAL => 'The file {name} was only partially uploaded.',
-            \UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+        $message = match ($this->error) {
+            \UPLOAD_ERR_INI_SIZE   => 'The file "{name}" exceeds your upload_max_filesize ini directive( limit is {size} KiB).',
+            \UPLOAD_ERR_FORM_SIZE  => 'The file {name} exceeds the upload limit defined in your form.',
+            \UPLOAD_ERR_PARTIAL    => 'The file {name} was only partially uploaded.',
+            \UPLOAD_ERR_NO_FILE    => 'No file was uploaded.',
             \UPLOAD_ERR_CANT_WRITE => 'The file {name} could not be written on disk.',
             \UPLOAD_ERR_NO_TMP_DIR => 'File could not be uploaded: missing temporary directory.',
-            \UPLOAD_ERR_EXTENSION => 'File upload was stopped by a PHP extension.',
-            default => 'The file {name} was not uploaded due to an unknown error.',
+            \UPLOAD_ERR_EXTENSION  => 'File upload was stopped by a PHP extension.',
+            default                => 'The file {name} was not uploaded due to an unknown error.',
         };
 
         return strtr( $message, [
@@ -299,7 +288,6 @@ class UploadedFile extends SplFileInfo {
 
 
 
-
     /**
      * @param string $dir
      * @param string|null $name
@@ -308,10 +296,10 @@ class UploadedFile extends SplFileInfo {
      */
     private function getTargetFile(string $dir, ?string $name): SplFileInfo {
 
-        if( ! is_dir( $dir ) ) throw new FileException( "Unable to find the $dir directory" );
-        if( ! is_writable( $dir ) ) throw new FileException( "Unable to write in the $dir directory" );
+        if( !is_dir( $dir ) ) throw new FileException( "Unable to find the $dir directory" );
+        if( !is_writable( $dir ) ) throw new FileException( "Unable to write in the $dir directory" );
 
-        $target = rtrim( $dir, '/\\' ) . \DIRECTORY_SEPARATOR . ( $name ?? $this->getBasename() );
+        $target = rtrim( $dir, '/\\' ) . \DIRECTORY_SEPARATOR . ($name ?? $this->getBasename());
 
         return new SplFileInfo( $target );
 

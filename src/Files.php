@@ -10,7 +10,7 @@ use const UPLOAD_ERR_NO_FILE;
 
 class Files {
 
-    private const FILE_KEYS = [ 'error', 'name', 'size', 'tmp_name', 'type' ];
+    private const array FILE_KEYS = [ 'error', 'name', 'size', 'tmp_name', 'type' ];
 
     /** @var array<string, UploadedFile|array<string, UploadedFile>> $parameters */
     protected array $parameters = [];
