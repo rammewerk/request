@@ -17,7 +17,7 @@ use Rammewerk\Component\Request\Error\CannotWriteFileException;
 class UploadedFile extends SplFileInfo {
 
     private string $originalName;
-    private ?string $mimeType;
+    private string $mimeType;
     private int $error;
 
 

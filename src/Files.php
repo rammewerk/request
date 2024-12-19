@@ -10,11 +10,10 @@ use const UPLOAD_ERR_NO_FILE;
 
 class Files {
 
-    private const array FILE_KEYS = [ 'error', 'name', 'size', 'tmp_name', 'type' ];
+    private const array FILE_KEYS = ['error', 'name', 'size', 'tmp_name', 'type'];
 
     /** @var array<string, UploadedFile|array<string, UploadedFile>> $parameters */
     protected array $parameters = [];
-
 
 
 
@@ -27,6 +26,7 @@ class Files {
     }
 
 
+
     /**
      * @return UploadedFile[]|File\UploadedFile[][]
      */
@@ -34,10 +34,11 @@ class Files {
         return $this->parameters;
     }
 
+
+
     public function get(string $key): mixed {
         return $this->parameters[$key] ?? null;
     }
-
 
 
 
@@ -51,7 +52,7 @@ class Files {
         foreach( $parameters as $key => $file ) {
 
             /** @phpstan-ignore-next-line */
-            if( ! is_array( $file ) && ! $file instanceof UploadedFile ) {
+            if( !is_array( $file ) && !$file instanceof UploadedFile ) {
                 throw new InvalidArgumentException( 'An uploaded file must be an array or an instance of UploadedFile.' );
             }
 
@@ -62,7 +63,6 @@ class Files {
         }
 
     }
-
 
 
 
@@ -84,13 +84,13 @@ class Files {
             if( $file['error'] === UPLOAD_ERR_NO_FILE ) return null;
             try {
                 return new UploadedFile( $file['tmp_name'], $file['name'], $file['type'], $file['error'] );
-            } catch ( Throwable ) {
+            } catch( Throwable ) {
                 return null;
             }
         }
 
         # Handle multiple files and convert them to UploadedFile instances
-        $file = array_map( function ($v) {
+        $file = array_map( function($v) {
             return $v instanceof UploadedFile || is_array( $v ) ? $this->convertFileInformation( $v ) : $v;
         }, $file );
 
@@ -100,23 +100,22 @@ class Files {
 
 
 
-
     /**
      * Flattens and normalize the $_FILES array.
      *
      * The $_FILES array is not consistent. This method will fix this.
      *
-     * @param array<string, mixed> $data
+     * @param array<string,mixed> $data
      *
      * @return array<string, mixed>
      */
     private function normalize(array $data): array {
 
         # Do not covert if the file array is not normal.
-        if( ! $this->isFileArray( $data ) ) return $data;
+        if( !$this->isFileArray( $data ) ) return $data;
 
         # No need to flatten if name is not an array
-        if( ! is_array( $data['name'] ) ) return $data;
+        if( !is_array( $data['name'] ) ) return $data;
 
         $files = [];
 
@@ -137,7 +136,6 @@ class Files {
 
 
 
-
     /**
      * Make sure data is a file array
      *
@@ -146,10 +144,7 @@ class Files {
      * @return bool
      */
     private function isFileArray(array $data): bool {
-        foreach( self::FILE_KEYS as $k ) {
-            if( ! array_key_exists( $k, $data ) ) return false;
-        }
-        return true;
+        return array_all( self::FILE_KEYS, static fn($k) => array_key_exists( $k, $data ) );
     }
 
 

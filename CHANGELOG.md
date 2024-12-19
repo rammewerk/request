@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+0.6.0
+---
+Now requires PHP 8.4 or higher
+
 0.5.0
 ---
 

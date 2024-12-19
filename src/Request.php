@@ -38,9 +38,13 @@ class Request {
         array $server = [],
         array $session = []
     ) {
+        /** @phpstan-ignore-next-line */
         $this->inputs = array_merge( $inputs, $this->getRawRequestData(), $_GET, $_POST );
+        /** @phpstan-ignore-next-line */
         $this->cookies = !empty( $cookies ) ? $cookies : $_COOKIE;
+        /** @phpstan-ignore-next-line */
         $this->server = !empty( $server ) ? $server : $_SERVER;
+        /** @phpstan-ignore-next-line */
         $this->files = new Files( !empty( $files ) ? $files : $_FILES );
         $this->session = new Session( $session );
         $this->flash = new Flash( $this->session );
@@ -49,7 +53,7 @@ class Request {
 
 
     /**
-     * @return array<int|string, array<int|string, string>|string>
+     * @return array<int|string, array|string>
      */
     private function getRawRequestData(): array {
         # Reads raw data from the request body.
